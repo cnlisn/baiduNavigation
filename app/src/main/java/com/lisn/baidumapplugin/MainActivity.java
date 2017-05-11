@@ -305,10 +305,8 @@ public class MainActivity extends AppCompatActivity {
                 break;
             }
             case BD09LL: {
-//                sNode = new BNRoutePlanNode(116.30784537597782, 40.057009624099436, "百度大厦", null, coType);
-//                eNode = new BNRoutePlanNode(116.40386525193937, 39.915160800132085, "北京天安门", null, coType);
-                sNode = new BNRoutePlanNode(118.804341, 31.975024, "百度大厦", null, coType);
-                eNode = new BNRoutePlanNode(118.805325, 32.094316, "北京天安门", null, coType);
+                sNode = new BNRoutePlanNode(118.804341, 31.975024, "南京南", null, coType);
+                eNode = new BNRoutePlanNode(118.805325, 32.094316, "南京", null, coType);
                 break;
             }
             default:
