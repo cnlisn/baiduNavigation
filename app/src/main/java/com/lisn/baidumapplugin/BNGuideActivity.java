@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
 import android.view.View;
-import android.widget.FrameLayout;
 
 import com.baidu.navisdk.adapter.BNRouteGuideManager;
 import com.baidu.navisdk.adapter.BNRouteGuideManager.CustomizedLayerItem;
@@ -28,11 +27,12 @@ import java.util.List;
  * @author sunhao04
  *
  */
-public class BNDemoGuideActivity extends Activity {
+public class BNGuideActivity extends Activity {
 
-	private final String TAG = BNDemoGuideActivity.class.getName();
+	private final String TAG = BNGuideActivity.class.getName();
 	private BNRoutePlanNode mBNRoutePlanNode = null;
 	private BaiduNaviCommonModule mBaiduNaviCommonModule = null;
+	public static final String ROUTE_PLAN_NODE = "routePlanNode";
 
 	/*
      * 对于导航模块有两种方式来实现发起导航。 1：使用通用接口来实现 2：使用传统接口来实现
@@ -45,7 +45,6 @@ public class BNDemoGuideActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		MainActivity.activityList.add(this);
 		createHandler();
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
 		}
@@ -65,18 +64,18 @@ public class BNDemoGuideActivity extends Activity {
 			view = BNRouteGuideManager.getInstance().onCreate(this,mOnNavigationListener);
 		}
 
-		setContentView(R.layout.nvlayout);
-		FrameLayout frameLayout = (FrameLayout) findViewById(R.id.fl_content);
+//		setContentView(R.layout.nvlayout);
+//		FrameLayout frameLayout = (FrameLayout) findViewById(R.id.fl_content);
 		if (view != null) {
-//			setContentView(view);
-			frameLayout.addView(view);
+			setContentView(view);
+//			frameLayout.addView(view);
 		}
 
 		Intent intent = getIntent();
 		if (intent != null) {
 			Bundle bundle = intent.getExtras();
 			if (bundle != null) {
-				mBNRoutePlanNode = (BNRoutePlanNode) bundle.getSerializable(MainActivity.ROUTE_PLAN_NODE);
+				mBNRoutePlanNode = (BNRoutePlanNode) bundle.getSerializable(ROUTE_PLAN_NODE);
 			}
 		}
 		//显示自定义图标
@@ -125,7 +124,6 @@ public class BNDemoGuideActivity extends Activity {
 		} else {
 			BNRouteGuideManager.getInstance().onDestroy();
 		}
-		MainActivity.activityList.remove(this);
 
 	}
 

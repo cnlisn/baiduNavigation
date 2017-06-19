@@ -1,173 +1,79 @@
-package com.lisn.baidumapplugin;
+package com.lisn.baidumapplugin.Test;
 
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
 import com.baidu.navisdk.adapter.BNCommonSettingParam;
-import com.baidu.navisdk.adapter.BNOuterLogUtil;
 import com.baidu.navisdk.adapter.BNRoutePlanNode;
 import com.baidu.navisdk.adapter.BNaviSettingManager;
 import com.baidu.navisdk.adapter.BaiduNaviManager;
+import com.lisn.baidumapplugin.BNGuideActivity;
+import com.lisn.baidumapplugin.R;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity {
+public class testActivity extends AppCompatActivity {
     private static final String[] authBaseArr = {Manifest.permission.WRITE_EXTERNAL_STORAGE,
             Manifest.permission.ACCESS_FINE_LOCATION};
     private static final String[] authComArr = {Manifest.permission.READ_PHONE_STATE};
     private static final int authBaseRequestCode = 1;
     private static final int authComRequestCode = 2;
-
-    private String mSDCardPath = null;
-    private static final String APP_FOLDER_NAME = "BNSDKSimpleDemo";
-    private BNRoutePlanNode.CoordinateType mCoordinateType;
-
+    private static final String TTS_APP_ID = "9624919";
     private boolean hasInitSuccess = false;
     private boolean hasRequestComAuth = false;
+    public static final String ROUTE_PLAN_NODE = "routePlanNode";
 
+    private Button button;
     private Context mContext;
     private Activity T;
 
-    public static List<Activity> activityList = new LinkedList<Activity>();
-    public static final String ROUTE_PLAN_NODE = "routePlanNode";
-    private Button mWgsNaviBtn;
-    private Button mDb06ll;
-    private Button mGcjNaviBtn;
-    private Button mBdmcNaviBtn;
+    private String mSDCardPath = null;
+    private static final String APP_FOLDER_NAME = "BNSDK";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_test);
         mContext = this;
         T = this;
-        activityList.add(this);
+        button = (Button) findViewById(R.id.bt_nav);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(testActivity.this, "路线规划中。。。", Toast.LENGTH_LONG).show();
+                routeplanToNavi(110, 31, 118.805325, 32.094316);
+            }
+        });
 
-        mWgsNaviBtn = (Button) findViewById(R.id.wgsNaviBtn);
-        mGcjNaviBtn = (Button) findViewById(R.id.gcjNaviBtn);
-        mBdmcNaviBtn = (Button) findViewById(R.id.bdmcNaviBtn);
-        mDb06ll = (Button) findViewById(R.id.mDb06llNaviBtn);
-        BNOuterLogUtil.setLogSwitcher(true);
-
-        initListener();
         if (initDirs()) {
             initNavi();
+        } else {
+            Toast.makeText(T, "百度导航引擎初始化失败", Toast.LENGTH_SHORT).show();
         }
     }
 
-    private void initListener() {
-
-        if (mWgsNaviBtn != null) {
-            mWgsNaviBtn.setOnClickListener(new View.OnClickListener() {
-
-                @Override
-                public void onClick(View arg0) {
-                    if (BaiduNaviManager.isNaviInited()) {
-                        routeplanToNavi(BNRoutePlanNode.CoordinateType.WGS84);
-                    }
-                }
-
-            });
-        }
-        if (mGcjNaviBtn != null) {
-            mGcjNaviBtn.setOnClickListener(new View.OnClickListener() {
-
-                @Override
-                public void onClick(View arg0) {
-                    if (BaiduNaviManager.isNaviInited()) {
-                        routeplanToNavi(BNRoutePlanNode.CoordinateType.GCJ02);
-                    }
-                }
-
-            });
-        }
-        if (mBdmcNaviBtn != null) {
-            mBdmcNaviBtn.setOnClickListener(new View.OnClickListener() {
-
-                @Override
-                public void onClick(View arg0) {
-
-                    if (BaiduNaviManager.isNaviInited()) {
-                        routeplanToNavi(BNRoutePlanNode.CoordinateType.BD09_MC);
-                    }
-                }
-            });
-        }
-
-        if (mDb06ll != null) {
-            mDb06ll.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View arg0) {
-                    if (BaiduNaviManager.isNaviInited()) {
-                        routeplanToNavi(BNRoutePlanNode.CoordinateType.BD09LL);
-                    }
-                }
-            });
-        }
-
-    }
-
-
-    String authinfo = null;
-
-    /*导航初始化*/
-    private void initNavi() {
-        // 申请权限
-        if (android.os.Build.VERSION.SDK_INT >= 23) {
-
-            if (!hasBasePhoneAuth()) {
-                this.requestPermissions(authBaseArr, authBaseRequestCode);
-                return;
+    /*    判断是否具有基本权限     */
+    private boolean hasBasePhoneAuth() {
+        PackageManager pm = this.getPackageManager();
+        for (String auth : authBaseArr) {
+            if (pm.checkPermission(auth, this.getPackageName()) != PackageManager.PERMISSION_GRANTED) {
+                return false;
             }
         }
-
-        BaiduNaviManager.getInstance().init(this, mSDCardPath, APP_FOLDER_NAME, new BaiduNaviManager.NaviInitListener() {
-            @Override
-            public void onAuthResult(int status, String msg) {
-                if (0 == status) {
-                    authinfo = "key校验成功!";
-                } else {
-                    authinfo = "key校验失败, " + msg;
-                }
-                T.runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        Toast.makeText(T, authinfo, Toast.LENGTH_LONG).show();
-                    }
-                });
-            }
-
-            public void initSuccess() {
-                Toast.makeText(T, "百度导航引擎初始化成功", Toast.LENGTH_SHORT).show();
-                hasInitSuccess = true;
-                initSetting();
-            }
-
-            public void initStart() {
-                Toast.makeText(T, "百度导航引擎初始化开始", Toast.LENGTH_SHORT).show();
-            }
-
-            public void initFailed() {
-                Toast.makeText(T, "百度导航引擎初始化失败", Toast.LENGTH_SHORT).show();
-            }
-
-        }, null, ttsHandler, ttsPlayStateListener);
-
+        return true;
     }
 
     /**
@@ -185,7 +91,6 @@ public class MainActivity extends AppCompatActivity {
             // showToastMsg("TTSPlayStateListener : TTS play start");
         }
     };
-
 
     /**
      * 内部TTS播报状态回传handler
@@ -217,30 +122,56 @@ public class MainActivity extends AppCompatActivity {
         BNaviSettingManager.setRealRoadCondition(BNaviSettingManager.RealRoadCondition.NAVI_ITS_ON);
         Bundle bundle = new Bundle();
         // 必须设置APPID，否则会静音
-        bundle.putString(BNCommonSettingParam.TTS_APP_ID, "9624919");
+        bundle.putString(BNCommonSettingParam.TTS_APP_ID, TTS_APP_ID);
         BNaviSettingManager.setNaviSdkParam(bundle);
     }
 
-    /*    判断是否具有基本权限     */
-    private boolean hasBasePhoneAuth() {
-        PackageManager pm = this.getPackageManager();
-        for (String auth : authBaseArr) {
-            if (pm.checkPermission(auth, this.getPackageName()) != PackageManager.PERMISSION_GRANTED) {
-                return false;
-            }
-        }
-        return true;
-    }
+    String authinfo = null;
 
-    /*是否完成权限认证*/
-    private boolean hasCompletePhoneAuth() {
-        PackageManager pm = this.getPackageManager();
-        for (String auth : authComArr) {
-            if (pm.checkPermission(auth, this.getPackageName()) != PackageManager.PERMISSION_GRANTED) {
-                return false;
+    /*导航初始化*/
+    private void initNavi() {
+        // 申请权限
+        if (android.os.Build.VERSION.SDK_INT >= 23) {
+
+            if (!hasBasePhoneAuth()) {
+                this.requestPermissions(authBaseArr, authBaseRequestCode);
+                return;
             }
         }
-        return true;
+
+        BaiduNaviManager.getInstance().init(this, mSDCardPath, APP_FOLDER_NAME, new BaiduNaviManager.NaviInitListener() {
+            @Override
+            public void onAuthResult(int status, String msg) {
+                if (0 == status) {
+                    authinfo = "key校验成功!";
+                } else {
+                    authinfo = "key校验失败, " + msg;
+                }
+//                T.runOnUiThread(new Runnable() {
+//                    @Override
+//                    public void run() {
+//                        Toast.makeText(T, authinfo, Toast.LENGTH_LONG).show();
+//                    }
+//                });
+                Log.e("---", "onAuthResult: " + authinfo);
+            }
+
+            public void initSuccess() {
+//                Toast.makeText(T, "百度导航引擎初始化成功", Toast.LENGTH_SHORT).show();
+                hasInitSuccess = true;
+                initSetting();
+            }
+
+            public void initStart() {
+//                Toast.makeText(T, "百度导航引擎初始化开始", Toast.LENGTH_SHORT).show();
+            }
+
+            public void initFailed() {
+                Toast.makeText(T, "百度导航引擎初始化失败", Toast.LENGTH_SHORT).show();
+            }
+
+        }, null, ttsHandler, ttsPlayStateListener);
+
     }
 
     @Override
@@ -251,7 +182,7 @@ public class MainActivity extends AppCompatActivity {
                 if (ret == PackageManager.PERMISSION_GRANTED) {
                     continue;
                 } else {
-                    Toast.makeText(MainActivity.this, "缺少导航基本的权限!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(mContext, "缺少导航基本的权限!", Toast.LENGTH_SHORT).show();
                     return;
                 }
             }
@@ -262,16 +193,27 @@ public class MainActivity extends AppCompatActivity {
                     continue;
                 }
             }
-            routeplanToNavi(mCoordinateType);
+            routeplanToNavi(100, 32, 118.805325, 32.094316);
         }
 
     }
 
+    /*是否完成权限认证*/
+    private boolean hasCompletePhoneAuth() {
+        PackageManager pm = T.getPackageManager();
+        for (String auth : authComArr) {
+            if (pm.checkPermission(auth, T.getPackageName()) != PackageManager.PERMISSION_GRANTED) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /*开始导航*/
-    private void routeplanToNavi(BNRoutePlanNode.CoordinateType coType) {
-        mCoordinateType = coType;
+    private void routeplanToNavi(double sLo, double sLa, double eLo, double eLa) {
+        BNRoutePlanNode.CoordinateType coType = BNRoutePlanNode.CoordinateType.BD09LL;
         if (!hasInitSuccess) {
-            Toast.makeText(T, "还未初始化!", Toast.LENGTH_SHORT).show();
+            Toast.makeText(T, "地图还未初始化完成!", Toast.LENGTH_SHORT).show();
         }
         // 权限申请
         if (android.os.Build.VERSION.SDK_INT >= 23) {
@@ -305,8 +247,8 @@ public class MainActivity extends AppCompatActivity {
                 break;
             }
             case BD09LL: {
-                sNode = new BNRoutePlanNode(118.804341, 31.975024, "南京南", null, coType);
-                eNode = new BNRoutePlanNode(118.805325, 32.094316, "南京", null, coType);
+                sNode = new BNRoutePlanNode(sLo, sLa, "南----京南", null, coType);
+                eNode = new BNRoutePlanNode(eLo, eLa, "南京。。。。", null, coType);
                 break;
             }
             default:
@@ -316,7 +258,7 @@ public class MainActivity extends AppCompatActivity {
             List<BNRoutePlanNode> list = new ArrayList<BNRoutePlanNode>();
             list.add(sNode);
             list.add(eNode);
-            BaiduNaviManager.getInstance().launchNavigator(this, list, 1, true, new DemoRoutePlanListener(sNode));
+            BaiduNaviManager.getInstance().launchNavigator(this, list, 1, true, new testActivity.DemoRoutePlanListener(sNode));
         }
     }
 
@@ -333,11 +275,11 @@ public class MainActivity extends AppCompatActivity {
             /*
              * 设置途径点以及resetEndNode会回调该接口
              */
-            for (Activity ac : activityList) {
-                if (ac.getClass().getName().endsWith("BNGuideActivity")) {
-                    return;
-                }
-            }
+//            for (Activity ac : activityList) {
+//                if (ac.getClass().getName().endsWith("BNGuideActivity")) {
+//                    return;
+//                }
+//            }
             Intent intent = new Intent(T, BNGuideActivity.class);
             Bundle bundle = new Bundle();
             bundle.putSerializable(ROUTE_PLAN_NODE, (BNRoutePlanNode) mBNRoutePlanNode);
@@ -348,10 +290,10 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onRoutePlanFailed() {
-            // TODO Auto-generated method stub
-            Toast.makeText(T, "算路失败", Toast.LENGTH_SHORT).show();
+            Toast.makeText(T, "路线规划失败", Toast.LENGTH_SHORT).show();
         }
     }
+
 
     private boolean initDirs() {
         mSDCardPath = getSdcardDir();
@@ -371,9 +313,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String getSdcardDir() {
-        if (Environment.getExternalStorageState().equalsIgnoreCase(Environment.MEDIA_MOUNTED)) {
-            return Environment.getExternalStorageDirectory().toString();
-        }
-        return null;
+//        if (Environment.getExternalStorageState().equalsIgnoreCase(Environment.MEDIA_MOUNTED)) {
+//            return Environment.getExternalStorageDirectory().toString();
+//        }
+        String path = mContext.getFilesDir().getAbsolutePath();
+        return path;
     }
 }
